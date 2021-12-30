@@ -4,15 +4,22 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "run:client": "nodemon ./client/client.js",
+    "run:auth-server": "nodemon ./authorization-server/auth-server.js",
+    "run:resource-server": "nodemon ./resource-server/resource-server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "nodemon": "^2.0.15",
     "prettier": "^2.5.1"
   },
   "dependencies": {
+    "axios": "^0.24.0",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^10.0.0",
     "express": "^4.17.2"
   }
 }
