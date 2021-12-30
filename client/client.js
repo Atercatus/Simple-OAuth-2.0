@@ -21,6 +21,7 @@ app.get("/login", (req, res) => {
   };
 
   res.cookie("sid", "SID");
+  session["sid"] = {};
 
   res.redirect(
     `http://localhost:${process.env.OAUTH_SERVER_PORT}/oauth/authorize?client_id=${query.client_id}&redirect_uri=${query.redirect_uri}&login=${query.login}&scope=${query.scope}&state=${query.state}&allow_signup=${query.allow_signup}&response_type=code`
@@ -29,6 +30,7 @@ app.get("/login", (req, res) => {
 
 app.get("/callback", (req, res) => {
   const { code } = req.query;
+  const { sid } = req.cookies;
 
   axios
     .post(
@@ -42,10 +44,9 @@ app.get("/callback", (req, res) => {
       }
     )
     .then((_res) => {
-      const { access_token, scope, token_type } = _res.data;
+      const { access_token, scope, token_type, refresh_token } = _res.data;
 
-      const { sid } = req.cookies;
-      session[sid] = { access_token };
+      session[sid] = { access_token, refresh_token };
 
       return axios.get(
         `http://localhost:${process.env.RESOURCE_SERVER_PORT}/${scope}`,
@@ -56,6 +57,29 @@ app.get("/callback", (req, res) => {
     })
     .then(({ data: userInfo }) => {
       res.redirect(`/home?userInfo=${userInfo}`);
+    })
+    .catch(() => {
+      if (session[sid].refresh_token) {
+        axios
+          .post(`http://localhost:${process.env.OAUTH_SERVER_PORT}/refresh`, {
+            grant_type: "refresh_token",
+            refresh_token: session[sid].refresh_token,
+            scope: "user",
+          })
+          .then(({ data }) => {
+            const { access_token, refresh_token } = data;
+
+            session[sid] = { access_token, refresh_token };
+
+            // and request resource...
+
+            res.redirect(`/home`);
+          });
+
+        return;
+      }
+
+      res.redirect(`/home`);
     });
 });
 

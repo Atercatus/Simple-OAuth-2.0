@@ -7,6 +7,7 @@ require("dotenv").config();
 const session = {};
 const accounts = ["cattus.nets@kakaocorp.com"];
 const apps = {};
+let cnt = 0;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -96,8 +97,43 @@ app.post("/oauth/access_token", (req, res) => {
   const access_token = "gho_16C7e42F292c6912E7710c838347Ae178B4a";
   const scope = appInfo.scope ?? "user"; // default: user
   const token_type = "bearer";
+  const refresh_token = "tGzv3JOkF0XG5Qx2TlKWIA";
 
-  res.send({ access_token, scope, token_type });
+  // for make refresh request
+  cnt += 1;
+
+  if (cnt > 1) {
+    res.status(401);
+  }
+
+  res.send({ access_token, scope, token_type, refresh_token });
+});
+
+app.post("/refresh", (req, res) => {
+  //  The authorization server MUST:
+  //
+  //    o  require client authentication for confidential clients or for any
+  //       client that was issued client credentials (or with other
+  //       authentication requirements),
+  //
+  //    o  authenticate the client if client authentication is included and
+  //       ensure that the refresh token was issued to the authenticated
+  //       client, and
+  //
+  //    o  validate the refresh token.
+  // refresh token 이 valid 하면~
+  if (req.body.refresh_token === "tGzv3JOkF0XG5Qx2TlKWIA") {
+    const access_token = "gho_16C7e42F292c6912E7710c838347Ae178B4a";
+    const scope = "user"; // default: user
+    const token_type = "bearer";
+    const refresh_token = "tGzv3JOkF0XG5Qx2TlKWIA";
+
+    res.send({ access_token, scope, token_type, refresh_token });
+
+    return;
+  }
+
+  res.status(401).send("INVALID");
 });
 
 app.listen(process.env.OAUTH_SERVER_PORT, () => {
